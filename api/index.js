@@ -32,23 +32,23 @@ module.exports = app => {
     }
     if (req.body.bleID == helpers.boardDict[data.bleMac]) {
       let Patient = mongoose.model("Patient");
-      let found = false;
       Patient.count({ bleMac: req.body.bleMac }, (err, c) => {
         if (err) throw err;
         if (c > 0) {
           res.send({ error: true, msg: "bleMac already exists" });
-          found = true;
+        }else{
+          data.bleID = helpers.boardDict[data.bleMac];
+          if (!data.dateAccepted) data.dateAccepted = helpers.getCurrentDay();
+          if (!data.UTC) data.UTC = helpers.getHour();
+          let newPatient = new Patient(data);
+          newPatient.save((err, patient) => {
+            if (err) throw err;
+            res.send(patient);
+          });
         }
       });
 
-      data.bleID = helpers.boardDict[data.bleMac];
-      if (!data.dateAccepted) data.dateAccepted = helpers.getCurrentDay();
-      if (!data.UTC) data.UTC = helpers.getHour();
-      let newPatient = new Patient(data);
-      newPatient.save((err, patient) => {
-        if (err) throw err;
-        if (!found) res.send(patient);
-      });
+
     } else {
       res.send({ error: true, msg: "bleMac didn't match the bleID" });
     }
